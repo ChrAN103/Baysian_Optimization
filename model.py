@@ -37,9 +37,9 @@ class CNN(nn.Module):
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 testloader = []
 
-def train(model, num_epoch, trainloader=None, optimizer=None):
+def train(model, num_epoch, trainloader=None, valloader=None, optimizer=None, early_stopping_patience=None):
     if trainloader is None:
-        trainloader, _ = load_data()
+        trainloader, _, _ = load_data()
     
     if optimizer is None:
         optimizer = optim.Adam(model.parameters(), lr=0.001)
@@ -47,7 +47,11 @@ def train(model, num_epoch, trainloader=None, optimizer=None):
     model = model.to(device)
     criterion = nn.CrossEntropyLoss()
     
+    best_val_acc = 0
+    patience_counter = 0
+    
     for epoch in tqdm(range(num_epoch)):
+        model.train()
         for images, labels in tqdm(trainloader, leave=False):
             images, labels = images.to(device), labels.to(device)
             optimizer.zero_grad()
@@ -55,6 +59,19 @@ def train(model, num_epoch, trainloader=None, optimizer=None):
             loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
+            
+        # Validation phase
+        if valloader and early_stopping_patience:
+            val_acc = test(model, valloader)
+            if val_acc > best_val_acc:
+                best_val_acc = val_acc
+                patience_counter = 0
+            else:
+                patience_counter += 1
+                
+            if patience_counter >= early_stopping_patience:
+                print(f"Early stopping at epoch {epoch+1}")
+                break
 
 def test(model, testloader=None):
     if testloader is None:
@@ -73,7 +90,7 @@ def test(model, testloader=None):
     accuracy = correct / total
     return accuracy
 
-def load_data(batch_size=64):
+def load_data(batch_size=64, val_split=None):
     transform = transforms.Compose([
         transforms.RandomHorizontalFlip(),
         transforms.RandomCrop(32, padding=4),
@@ -83,6 +100,15 @@ def load_data(batch_size=64):
 
     trainset = torchvision.datasets.CIFAR10(root='./data', train=True, 
                                           download=True, transform=transform)
+    
+    if val_split:
+        val_size = int(len(trainset) * val_split)
+        train_size = len(trainset) - val_size
+        trainset, valset = torch.utils.data.random_split(trainset, [train_size, val_size])
+        valloader = torch.utils.data.DataLoader(valset, batch_size=batch_size, shuffle=False)
+    else:
+        valloader = None
+
     trainloader = torch.utils.data.DataLoader(trainset, 
                                             batch_size=batch_size, 
                                             shuffle=True)
@@ -93,7 +119,7 @@ def load_data(batch_size=64):
                                            batch_size=batch_size, 
                                            shuffle=False)
 
-    return trainloader, testloader
+    return trainloader, valloader, testloader
 
 if __name__ == "__main__":
     train(5)

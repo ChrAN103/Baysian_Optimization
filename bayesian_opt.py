@@ -8,16 +8,18 @@ import torch.optim as optim
 def objective_function(x):
     # Extract parameters
     layers = float(x[:, 0])
+    # batch_size = int(x[:, 1])
+    # epochs = int(x[:, 2])
     
     # Initialize model
     model = CNN(layers)
     optimizer = optim.Adam(model.parameters(), lr=1e-4)
     
     # Load data with current batch size
-    trainloader, testloader = load_data(batch_size=64)
+    trainloader, valloader, testloader = load_data(batch_size=512, val_split=0.1)
     
     # Train model
-    train(model, 5, trainloader=trainloader, optimizer=optimizer)
+    train(model, 5, trainloader=trainloader, valloader=valloader, optimizer=optimizer)
     
     # Test model
     accuracy = test(model, testloader=testloader)
@@ -31,6 +33,7 @@ bounds = [
 ]
 
 def main():
+    print("device", torch.device("cuda" if torch.cuda.is_available() else "cpu"))
     # Initialize Bayesian Optimization
     optimizer = GPyOpt.methods.BayesianOptimization(
         f=objective_function,
@@ -38,11 +41,11 @@ def main():
         model_type='GP',
         acquisition_type='EI',
         maximize=False,
-        initial_design_numdata=5
+        initial_design_numdata=3
     )
     
     # Run optimization
-    optimizer.run_optimization(max_iter=15)
+    optimizer.run_optimization(max_iter=10)
     
     # Print results
     print("Optimal parameters:")
