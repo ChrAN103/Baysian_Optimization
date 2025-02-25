@@ -35,12 +35,16 @@ class CNN(nn.Module):
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 testloader = []
 
-def train(model, num_epoch):
-    global testloader
+def train(model, num_epoch, trainloader=None, optimizer=None):
+    if trainloader is None:
+        trainloader, _ = load_data()
+    
+    if optimizer is None:
+        optimizer = optim.Adam(model.parameters(), lr=0.001)
+        
     model = model.to(device)
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
-    trainloader, testloader = load_data()
+    
     for epoch in tqdm(range(num_epoch)):
         for images, labels in tqdm(trainloader, leave=False):
             images, labels = images.to(device), labels.to(device)
@@ -64,7 +68,7 @@ def test(model):
     accuracy = correct / total
     return accuracy
 
-def load_data():
+def load_data(batch_size=64):
     transform = transforms.Compose([
         transforms.RandomHorizontalFlip(),
         transforms.RandomCrop(32, padding=4),
@@ -72,11 +76,17 @@ def load_data():
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
 
-    trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True)
+    trainset = torchvision.datasets.CIFAR10(root='./data', train=True, 
+                                          download=True, transform=transform)
+    trainloader = torch.utils.data.DataLoader(trainset, 
+                                            batch_size=batch_size, 
+                                            shuffle=True)
 
-    testset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=64, shuffle=False)
+    testset = torchvision.datasets.CIFAR10(root='./data', train=False, 
+                                         download=True, transform=transform)
+    testloader = torch.utils.data.DataLoader(testset, 
+                                           batch_size=batch_size, 
+                                           shuffle=False)
 
     return trainloader, testloader
 
