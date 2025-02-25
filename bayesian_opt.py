@@ -22,7 +22,7 @@ def objective_function(x):
     train(model, epochs, trainloader=trainloader, optimizer=optimizer)
     
     # Test model
-    accuracy = test(model)
+    accuracy = test(model, testloader=testloader)
     
     # GPyOpt minimizes, so return negative accuracy
     return -accuracy

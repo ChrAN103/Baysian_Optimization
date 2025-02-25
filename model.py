@@ -54,7 +54,10 @@ def train(model, num_epoch, trainloader=None, optimizer=None):
             loss.backward()
             optimizer.step()
 
-def test(model):
+def test(model, testloader=None):
+    if testloader is None:
+        _, testloader = load_data()
+        
     correct = 0
     total = 0
     with torch.no_grad():
