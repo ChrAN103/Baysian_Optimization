@@ -7,19 +7,17 @@ import torch.optim as optim
 
 def objective_function(x):
     # Extract parameters
-    learning_rate = float(x[:, 0])
-    batch_size = int(x[:, 1])
-    epochs = int(x[:, 2])
+    layers = float(x[:, 0])
     
     # Initialize model
-    model = CNN()
-    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    model = CNN(layers)
+    optimizer = optim.Adam(model.parameters(), lr=1e-4)
     
     # Load data with current batch size
-    trainloader, testloader = load_data(batch_size=batch_size)
+    trainloader, testloader = load_data(batch_size=64)
     
     # Train model
-    train(model, epochs, trainloader=trainloader, optimizer=optimizer)
+    train(model, 5, trainloader=trainloader, optimizer=optimizer)
     
     # Test model
     accuracy = test(model, testloader=testloader)
@@ -29,9 +27,7 @@ def objective_function(x):
 
 # Define the parameter space
 bounds = [
-    {'name': 'learning_rate', 'type': 'continuous', 'domain': (1e-4, 1e-2)},
-    {'name': 'batch_size', 'type': 'discrete', 'domain': (16, 32, 64, 128)},
-    {'name': 'epochs', 'type': 'discrete', 'domain': (3, 5, 7, 10)}
+    {'name': 'layers', 'type': 'discrete', 'domain': (64,128,256,512)}
 ]
 
 def main():
