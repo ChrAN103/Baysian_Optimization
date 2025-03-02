@@ -1,8 +1,4 @@
-torch
-torchvision
 tqdm
 numpy
 matplotlib
 seaborn
-GPyOpt
-scikit-learn
