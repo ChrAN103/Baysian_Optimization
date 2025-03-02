@@ -2,3 +2,5 @@ tqdm
 numpy
 matplotlib
 seaborn
+scikit-learn
+scikit-optimize
